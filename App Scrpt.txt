@@ -1,0 +1,420 @@
+/******************************************************************************************
+* Case Counter Pro v2.1 — Google Apps Script (Backend Corregido y Mejorado)
+*
+* Implementado por: Gema, el Arquitecto de Extensiones
+* Versión: 2.1.1 (Corregida)
+*
+* Mejoras Clave v2.1:
+* - NUEVO: Función para actualizar la meta de un usuario desde la extensión.
+* - NUEVO: Función para eliminar el último caso registrado de un usuario (Undo).
+* - CORREGIDO: Lógica para registrar correctamente casos "ON LEVEL UP" y "OFF LEVEL UP".
+* - CORREGIDO: Parámetros de update_meta para coincidir con popup.js.
+* - MEJORADO: Logging para debugging y monitoreo.
+* - MEJORADO: Validaciones adicionales de seguridad.
+******************************************************************************************/
+
+// ---------- CONFIGURACIÓN GLOBAL ----------
+const TIMEZONE = "America/Bogota";
+const SPREADSHEET = SpreadsheetApp.getActive();
+
+// Nombres de las hojas de cálculo
+const SHEET_DATA = "Data";
+const SHEET_METAS = "Metas";
+const SHEET_USUARIOS = "Usuarios";
+
+// ---------- UTILIDADES ----------
+
+/** Devuelve una respuesta en formato JSON estándar para la extensión. */
+function jsonOutput(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Obtiene una hoja de cálculo por su nombre de forma segura. */
+const getSheet = (name) => SPREADSHEET.getSheetByName(name);
+
+/** Normaliza un string a minúsculas y sin espacios extra para consistencia. */
+const normalize = (s) => (s || "").toString().trim().toLowerCase();
+
+/** Convierte una fecha a formato YYYY-MM-DD en la zona horaria correcta. */
+const toDayKey = (d) => Utilities.formatDate(d, TIMEZONE, "yyyy-MM-dd");
+
+/** Obtiene la fecha y hora actual en la zona horaria correcta. */
+const now = () => new Date();
+
+/** Función de logging mejorada para debugging. */
+function logAction(action, data, result = null) {
+  const timestamp = Utilities.formatDate(now(), TIMEZONE, "yyyy-MM-dd HH:mm:ss");
+  console.log(`[${timestamp}] Action: ${action}`, { data, result });
+}
+
+// ---------- LÓGICA DE NEGOCIO PRINCIPAL ----------
+
+/**
+* Calcula el ranking, rachas, datos semanales y KPIs para un equipo en una fecha específica.
+* Esta es la función central y optimizada del backend.
+*/
+function computeTeamData(leaderLdap, dateKey) {
+  logAction('computeTeamData', { leaderLdap, dateKey });
+  
+  leaderLdap = normalize(leaderLdap);
+  const dataSheet = getSheet(SHEET_DATA);
+  const metasSheet = getSheet(SHEET_METAS);
+  const usuariosSheet = getSheet(SHEET_USUARIOS);
+
+  // 1. Obtener miembros del equipo y sus metas
+  const teamMembers = usuariosSheet.getDataRange().getValues().slice(1)
+    .filter(row => normalize(row[2]) === leaderLdap)
+    .map(row => normalize(row[0]));
+
+  if (teamMembers.length === 0) {
+    logAction('computeTeamData', 'No team members found', { leaderLdap });
+    return {
+      ok: true,
+      ranking: [],
+      kpis: {
+        teamTotal: 0,
+        teamEfficiency: 0,
+        activeStreaks: 0,
+        avgTimeBetweenCases: 0,
+        weeklyData: Array(7).fill(0)
+      }
+    };
+  }
+
+  const metasData = metasSheet.getDataRange().getValues().slice(1);
+  const metaMap = metasData.reduce((acc, row) => {
+    const user = normalize(row[0]);
+    if (teamMembers.includes(user)) {
+      acc[user] = { meta: Number(row[1]) || 0 };
+    }
+    return acc;
+  }, {});
+
+  // 2. Obtener datos de rendimiento de los últimos 8 días (para rachas y gráficos)
+  const startDate = new Date(dateKey);
+  startDate.setDate(startDate.getDate() - 8);
+  const startDateKey = toDayKey(startDate);
+
+  const allData = dataSheet.getDataRange().getValues().slice(1)
+    .filter(row => {
+      const rowDay = toDayKey(new Date(row[5])); // Columna F: Día
+      const rowLeader = normalize(row[4]); // Columna E: Líder
+      return rowDay >= startDateKey && rowLeader === leaderLdap;
+    });
+
+  // 3. Procesar datos y calcular estadísticas
+  const dailyTotals = {}; // { 'user': { 'YYYY-MM-DD': total } }
+  const todayCases = [];
+
+  allData.forEach(row => {
+    const user = normalize(row[0]);
+    const day = toDayKey(new Date(row[5]));
+    
+    if (!dailyTotals[user]) dailyTotals[user] = {};
+    dailyTotals[user][day] = (dailyTotals[user][day] || 0) + 1;
+
+    if (day === dateKey && teamMembers.includes(user)) {
+      todayCases.push({
+        user: user,
+        type: String(row[2] || "").toUpperCase(),
+        timestamp: new Date(row[1]).getTime() // Columna B: Fecha
+      });
+    }
+  });
+
+  // 4. Calcular rachas
+  teamMembers.forEach(user => {
+    let currentStreak = 0;
+    const userMeta = metaMap[user]?.meta || 0;
+    if (userMeta > 0) {
+      for (let i = 0; i < 8; i++) {
+        const d = new Date(dateKey);
+        d.setDate(d.getDate() - i);
+        const dayKey = toDayKey(d);
+        const total = dailyTotals[user]?.[dayKey] || 0;
+        if (total >= userMeta) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+    if (metaMap[user]) {
+        metaMap[user].streak = { current: currentStreak, best: currentStreak }; // Simplificado, 'best' real requeriría más datos históricos
+    }
+  });
+  
+  // 5. Calcular datos para el gráfico semanal (últimos 7 días) - CORREGIDO
+  const weeklyData = Array(7).fill(0);
+  for (let i = 0; i < 7; i++) {
+      const d = new Date(dateKey);
+      d.setDate(d.getDate() - (6 - i)); // Últimos 7 días, ordenados correctamente
+      const dayKey = toDayKey(d);
+      teamMembers.forEach(user => {
+          weeklyData[i] += dailyTotals[user]?.[dayKey] || 0;
+      });
+  }
+
+  // 6. Construir el ranking y las estadísticas de hoy - MEJORADO con Level Up
+  const ranking = teamMembers.map(user => {
+    const userCases = todayCases.filter(c => c.user === user);
+    const lastCaseTs = userCases.length > 0 ? Math.max(...userCases.map(c => c.timestamp)) : 0;
+    
+    // MEJORADO: Conteo correcto de casos ON/OFF con Level Up
+    const onCases = userCases.filter(c => c.type === 'ON').length;
+    const offCases = userCases.filter(c => c.type === 'OFF').length;
+    const onLevelUpCases = userCases.filter(c => c.type === 'ON LEVEL UP').length;
+    const offLevelUpCases = userCases.filter(c => c.type === 'OFF LEVEL UP').length;
+
+    return {
+      ldap: user,
+      score: userCases.length,
+      on: onCases + onLevelUpCases, // Total ON (incluyendo Level Up)
+      off: offCases + offLevelUpCases, // Total OFF (incluyendo Level Up)
+      level: onLevelUpCases + offLevelUpCases, // Solo Level Up
+      goal: metaMap[user]?.meta || 0,
+      lastTs: lastCaseTs,
+      streak: metaMap[user]?.streak || { current: 0, best: 0 }
+    };
+  }).sort((a, b) => b.score - a.score || b.lastTs - a.lastTs);
+
+  // 7. Calcular KPIs avanzados para el líder
+  const teamTotal = ranking.reduce((sum, u) => sum + u.score, 0);
+  const teamGoal = ranking.reduce((sum, u) => sum + u.goal, 0);
+  const activeStreaks = ranking.filter(u => u.streak.current >= 3).length;
+  
+  const timestamps = todayCases.map(c => c.timestamp).sort((a, b) => a - b);
+  let avgTimeBetweenCases = 0;
+  if (timestamps.length > 1) {
+      const diffs = [];
+      for (let i = 1; i < timestamps.length; i++) {
+          diffs.push((timestamps[i] - timestamps[i-1]) / 60000); // en minutos
+      }
+      avgTimeBetweenCases = diffs.reduce((a,b) => a+b, 0) / diffs.length;
+  }
+
+  const result = {
+    ok: true,
+    ranking: ranking,
+    kpis: {
+      teamTotal: teamTotal,
+      teamEfficiency: teamGoal > 0 ? Math.round((teamTotal / teamGoal) * 100) : 0,
+      activeStreaks: activeStreaks,
+      avgTimeBetweenCases: parseFloat(avgTimeBetweenCases.toFixed(2)),
+      weeklyData: weeklyData
+    }
+  };
+
+  logAction('computeTeamData', 'Success', { teamMembers: teamMembers.length, teamTotal });
+  return result;
+}
+
+// ---------- ENDPOINTS (doGet / doPost) ----------
+
+/**
+* Maneja las peticiones GET desde la extensión.
+* - ?equipo=<ldap>&fecha=<yyyy-mm-dd> -> Devuelve todos los datos del equipo.
+* - ?usuarios=1 -> Devuelve la lista de usuarios.
+* - ?lookupUsuario=<ldap> -> Devuelve los datos de un usuario específico.
+*/
+function doGet(e) {
+  const p = e.parameter || {};
+  logAction('doGet', p);
+  
+  if (p.equipo && p.fecha) {
+    const data = computeTeamData(p.equipo, p.fecha);
+    return jsonOutput(data);
+  }
+  
+  if (p.usuarios) {
+    const vals = getSheet(SHEET_USUARIOS).getDataRange().getValues().slice(1);
+    const out = vals.map(row => ({ 
+      usuario: normalize(row[0]), 
+      nombre: row[1] || "", 
+      lider: normalize(row[2]) 
+    }));
+    return jsonOutput({ ok: true, usuarios: out });
+  }
+
+  if (p.lookupUsuario){
+    const ldap = normalize(p.lookupUsuario);
+    const vals = getSheet(SHEET_USUARIOS).getDataRange().getValues().slice(1);
+    const user = vals.find(row => normalize(row[0]) === ldap);
+    if (user) {
+      return jsonOutput({ 
+        ok: true, 
+        usuario: normalize(user[0]), 
+        nombre: user[1] || "", 
+        lider: normalize(user[2]) 
+      });
+    }
+    return jsonOutput({ ok: false, error: "Usuario no encontrado" });
+  }
+
+  return jsonOutput({ ok: false, error: "Parámetros no reconocidos" });
+}
+
+/**
+* Maneja las peticiones POST desde la extensión.
+* Principalmente para el registro de nuevos casos, actualización de metas y eliminación de casos.
+*/
+function doPost(e) {
+  const body = JSON.parse(e.postData.contents);
+  const action = body.action || "";
+  
+  // MEJORADO: Log para debugging
+  logAction('doPost', { action, ...body });
+
+  if (action === "register_case") {
+    return handleRegisterCase(body);
+  }
+
+  if (action === "update_meta") {
+    return handleUpdateMeta(body);
+  }
+
+  if (action === "delete_last_case") {
+    return handleDeleteLastCase(body);
+  }
+
+  return jsonOutput({ ok: false, error: "Acción no reconocida." });
+}
+
+// ---------- HANDLERS DE POST ----------
+
+/**
+* Maneja el registro de casos (incluyendo Level Up).
+*/
+function handleRegisterCase(body) {
+  const { usuario, lider, tipo, caseId, levelUp } = body;
+  
+  if (!usuario || !lider || !tipo || !caseId) {
+    return jsonOutput({ ok: false, error: "Datos incompletos para el registro." });
+  }
+
+  // MEJORADO: Lógica de Level Up
+  let finalType = String(tipo).toUpperCase();
+  if (levelUp === true) {
+    finalType += " LEVEL UP";
+  }
+  
+  const fecha = now();
+  const dia = toDayKey(fecha);
+  const uniqueKey = `${dia}-${normalize(usuario)}-${caseId}`;
+  const dataSheet = getSheet(SHEET_DATA);
+
+  // Idempotencia: Verificar si el caso ya existe para evitar duplicados.
+  const data = dataSheet.getRange("H:H").getValues();
+  const exists = data.flat().some(key => key === uniqueKey);
+  if (exists) {
+    return jsonOutput({ ok: true, dedupe: true, message: "Caso ya registrado." });
+  }
+  
+  try {
+    dataSheet.appendRow([
+      normalize(usuario), // A: Usuario
+      fecha,             // B: Fecha Completa
+      finalType,         // C: Tipo (incluyendo "LEVEL UP" si aplica)
+      String(caseId).trim(), // D: Case ID
+      normalize(lider),    // E: Líder
+      dia,                 // F: Día (YYYY-MM-DD)
+      Utilities.formatDate(fecha, TIMEZONE, "HH"), // G: Hora
+      uniqueKey            // H: Clave Única
+    ]);
+
+    logAction('register_case', 'Success', { usuario, tipo: finalType, caseId });
+    return jsonOutput({ ok: true, message: "Caso registrado con éxito." });
+    
+  } catch (error) {
+    logAction('register_case', 'Error', error);
+    return jsonOutput({ ok: false, error: "Error al registrar el caso." });
+  }
+}
+
+/**
+* Maneja la actualización de metas de usuario.
+*/
+function handleUpdateMeta(body) {
+  const { usuario, meta } = body; // CORREGIDO: era 'nuevaMeta', ahora es 'meta'
+  
+  if (!usuario || meta === undefined || meta === null) {
+    return jsonOutput({ ok: false, error: "Datos de meta incompletos." });
+  }
+
+  // MEJORADO: Validación de meta
+  const metaNumber = Number(meta);
+  if (isNaN(metaNumber) || metaNumber < 1 || metaNumber > 999) {
+    return jsonOutput({ ok: false, error: "Meta debe ser un número entre 1 y 999." });
+  }
+
+  try {
+    const metasSheet = getSheet(SHEET_METAS);
+    const metasData = metasSheet.getDataRange().getValues();
+    const userRow = metasData.findIndex(row => normalize(row[0]) === normalize(usuario));
+
+    if (userRow > -1) {
+      // Actualizar meta existente
+      metasSheet.getRange(userRow + 1, 2).setValue(metaNumber);
+      logAction('update_meta', 'Updated existing', { usuario, meta: metaNumber });
+      return jsonOutput({ ok: true, message: "Meta actualizada correctamente." });
+    } else {
+      // Crear nueva meta
+      metasSheet.appendRow([normalize(usuario), metaNumber]);
+      logAction('update_meta', 'Created new', { usuario, meta: metaNumber });
+      return jsonOutput({ ok: true, message: "Usuario y meta creados correctamente." });
+    }
+    
+  } catch (error) {
+    logAction('update_meta', 'Error', error);
+    return jsonOutput({ ok: false, error: "Error al actualizar la meta." });
+  }
+}
+
+/**
+* Maneja la eliminación del último caso de un usuario (función Undo).
+*/  
+function handleDeleteLastCase(body) {
+  const { usuario } = body;
+  
+  if (!usuario) {
+    return jsonOutput({ ok: false, error: "Usuario no especificado." });
+  }
+  
+  try {
+    const dataSheet = getSheet(SHEET_DATA);
+    const data = dataSheet.getDataRange().getValues();
+    let lastRowIndex = -1;
+    let deletedCase = null;
+    
+    // Encontrar la última fila para ese usuario, buscando desde el final
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (normalize(data[i][0]) === normalize(usuario)) {
+        lastRowIndex = i + 1; // +1 porque los índices de las hojas son base 1
+        deletedCase = {
+          tipo: data[i][2],
+          caseId: data[i][3],
+          fecha: data[i][1]
+        };
+        break;
+      }
+    }
+
+    if (lastRowIndex > -1) {
+      dataSheet.deleteRow(lastRowIndex);
+      logAction('delete_last_case', 'Success', { usuario, deletedCase });
+      return jsonOutput({ 
+        ok: true, 
+        message: "Último caso eliminado correctamente.",
+        deletedCase: deletedCase
+      });
+    } else {
+      logAction('delete_last_case', 'Not found', { usuario });
+      return jsonOutput({ ok: false, error: "No se encontró ningún caso para eliminar." });
+    }
+    
+  } catch (error) {
+    logAction('delete_last_case', 'Error', error);
+    return jsonOutput({ ok: false, error: "Error al eliminar el caso." });
+  }
+}
