@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Case Counter Pro</title>
+  <link rel="stylesheet" href="styles.css?v=pro-2025-08-10"/>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <span id="appTitle">Contador</span>
+      <button class="icon-btn auth-only agent-only" id="focusBtn" title="Modo Foco" aria-label="Modo Foco" hidden>👁️</button>
+    </div>
+    <div class="topbar-right">
+      <span id="liveClock" class="clock auth-only" hidden>--:--:--</span>
+    </div>
+  </header>
+
+  <main class="root">
+
+    <!-- LOGIN -->
+    <section id="loginView" class="view active tight">
+      <div class="login-header mb6">
+        <h1 class="title">Entrar</h1>
+        <button id="helpBtn" class="help-btn" title="Ayuda" aria-label="Ayuda">❓</button>
+      </div>
+
+      <div class="row mb6">
+        <button id="roleRep" class="btn toggle active">Representante</button>
+        <button id="roleLeader" class="btn toggle">Líder</button>
+      </div>
+
+      <div class="row mb6">
+        <div class="mini-field">
+          <label class="label">Líder</label>
+          <input id="leaderLdapInput" class="input" type="text" placeholder="ldapdelider"/>
+        </div>
+        <div class="mini-field" id="repFieldWrap">
+          <label class="label">Tu LDAP</label>
+          <input id="ldapInput" class="input" type="text" placeholder="tuusuario"/>
+        </div>
+      </div>
+
+      <button id="loginBtn" class="btn primary full">Ingresar</button>
+      <p id="loginError" class="error mt6" aria-live="polite"></p>
+      <small class="muted">Validamos tu usuario y líder con la hoja <b>Usuarios</b>.</small>
+    </section>
+
+    <!-- PRINCIPAL (Representante) -->
+    <section id="mainView" class="view">
+      <div id="casesTab" class="tabpanel active">
+        
+        <!-- CORREGIDO: Input con Level Up como modificador -->
+        <div class="card mb6">
+          <label class="label">ID de caso</label>
+          <div class="case-input-container" id="caseInputContainer">
+            <input id="caseIdInput" class="input case-input" type="text" placeholder="Número de identificación"/>
+            <button id="levelUpModifier" class="level-up-btn" title="Activar Level Up - Convierte caso normal en complejo" data-type="modifier">✨</button>
+          </div>
+          <small class="muted">Último: <span id="lastCaseId">—</span></small>
+          
+          <!-- NUEVO: Indicador Level Up activo -->
+          <div id="levelUpIndicator" class="level-up-indicator" hidden>
+            <div class="level-up-status">✨ Level Up ACTIVO - El próximo caso será complejo</div>
+          </div>
+        </div>
+
+        <!-- NORMAL: Botones ON/OFF (ahora pueden ser Level Up) -->
+        <div class="row">
+          <button id="btnOn" class="btn action grow anim-on" data-type="on">
+            <span class="btn-icon">▷</span>
+            <span class="btn-text">ON</span>
+            <span class="btn-level-indicator" hidden>+ Level Up</span>
+          </button>
+          <button id="btnOff" class="btn action grow anim-off" data-type="off">
+            <span class="btn-icon">✉</span>
+            <span class="btn-text">OFF</span>
+            <span class="btn-level-indicator" hidden>+ Level Up</span>
+          </button>
+        </div>
+
+        <div class="card mt6">
+          <div class="row-between">
+            <span class="muted">Meta Diaria</span>
+            <span id="goalText" class="muted">0 / 50</span>
+          </div>
+          <div class="progress mt6">
+            <span id="progressIcon" class="progress-icon" aria-hidden="true">🚀</span>
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+
+          <div id="goalInline" class="goal-inline" hidden>
+            <input id="goalInputInline" class="input" type="number" min="1" step="1" />
+            <div class="row">
+              <button id="goalSaveInline" class="btn success grow">Guardar</button>
+              <button id="goalCancelInline" class="btn ghost">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2 mt6">
+          <div class="card">
+            <h3 class="subtitle">Resumen</h3>
+            <ul class="stats">
+              <li>ON: <b id="statOn">0</b></li>
+              <li>OFF: <b id="statOff">0</b></li>
+              <li>Level Up: <b id="statLevel">0</b></li>
+              <li>Total: <b id="statTotal">0</b></li>
+            </ul>
+            
+            <!-- REUBICADO: Rachas debajo del resumen -->
+            <div class="streak-mini-relocated mt6" id="streakMiniRelocated">
+              <div class="streak-mini-content">
+                <span class="streak-mini-icon">🔥</span>
+                <span id="streakDays">0</span>
+                <span class="streak-mini-label">días seguidos</span>
+                <span class="streak-mini-record">(récord: <span id="streakBest">0</span>)</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3 class="subtitle">Mi Posición</h3>
+            <div id="miniRanking" class="mini-ranking-container"></div>
+            
+            <!-- CORREGIDO: Métrica de última hora -->
+            <div id="realtimeMetrics" class="realtime-metrics mt6">
+              <div class="metric-item">
+                <span class="metric-label">Última hora (<span id="currentHourRange">--</span>):</span>
+                <span id="lastHourCases" class="metric-value">0 casos</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Total equipo:</span>
+                <span id="teamTotal" class="metric-value">0 (<span id="myParticipation">0%</span>)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt6">
+          <button id="undoBtn" class="btn ghost">-1</button>
+          <button id="editGoalBtn" class="btn success grow">Modificar Meta</button>
+        </div>
+
+        <div class="row mt6">
+          <button class="icon-btn bottom-nav" id="achievementsBtn" title="Logros">🎖️</button>
+          <button class="icon-btn bottom-nav" id="rankingBtn" title="Ranking">🏆</button>
+          <button class="icon-btn bottom-nav" id="settingsBtn" title="Configuración">⚙️</button>
+          <button class="btn outline grow" id="historyBtn" title="Ver historial completo">📊 Historial</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RANKING -->
+    <section id="rankingView" class="view">
+      <div class="navrow">
+        <button class="icon-btn" data-back="main">←</button>
+        <h2 class="title">Ranking del Equipo</h2>
+      </div>
+      <div id="motivationalMessage" class="motivational-card mb6">
+        <div class="motivation-text">¡Sigue así! 💪</div>
+      </div>
+      <div id="rankingList" class="rank-list"></div>
+    </section>
+
+    <!-- CONFIGURACIÓN -->
+    <section id="settingsView" class="view">
+      <div class="navrow">
+        <button class="icon-btn" data-back="main">←</button>
+        <h2 class="title">Configuración</h2>
+        <button id="openPalettes" class="icon-btn" title="Paletas">🎨</button>
+      </div>
+
+      <div id="themeCard" class="card">
+        <h3 class="subtitle">Paletas (color o animación)</h3>
+        <div id="themePicker" class="theme-grid fancy">
+          <button class="swatch fancy" data-theme="purple"   style="--c:#8A2BE2">🌌</button><span>Noche Púrpura</span>
+          <button class="swatch fancy" data-theme="mint"     style="--c:#1DBA8E">🍃</button><span>Menta Fresca</span>
+          <button class="swatch fancy" data-theme="sunset"   style="--c:#FF7A18">🌇</button><span>Atardecer</span>
+          <button class="swatch fancy" data-theme="ocean"    style="--c:#1E88E5">🌊</button><span>Océano</span>
+          <button class="swatch fancy" data-theme="pink"     style="--c:#EC4899">🌸</button><span>Rosa</span>
+          <button class="swatch fancy" data-anim="ambitious"    style="--c:#16a34a">🚀</button><span>Ambicioso</span>
+          <button class="swatch fancy" data-anim="productivity" style="--c:#0ea5e9">☕</button><span>Productividad</span>
+          <button class="swatch fancy" data-anim="magic"        style="--c:#7c3aed">✨</button><span>Mágico</span>
+          <button class="swatch fancy" data-anim="classic"      style="--c:#f59e0b">📈</button><span>Clásico</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="subtitle">Personalizar tono</h3>
+        <div class="row">
+          <input id="customColor" class="input range-color" type="color" value="#1DBA8E" title="Color primario"/>
+          <button id="resetThemeBtn" class="btn ghost">Reset</button>
+        </div>
+        <small class="muted">Elige un color y lo aplicamos al tema actual.</small>
+        
+        <button id="extensionSettingsBtn" class="btn outline full mt6">
+          ⌨️ Atajos de Teclado
+        </button>
+        <small class="muted">Configura shortcuts para registrar casos más rápido.</small>
+      </div>
+
+      <button id="logoutBtn" class="btn danger full mt6">Cerrar Sesión</button>
+    </section>
+
+    <!-- LOGROS CORREGIDOS -->
+    <section id="achievementsView" class="view">
+      <div class="navrow">
+        <button class="icon-btn" data-back="main">←</button>
+        <h2 class="title">Logros</h2>
+        <div class="achievement-progress">
+          <span id="achievementCount">0/12</span>
+        </div>
+      </div>
+      
+      <div class="achievement-categories">
+        <!-- Casos ON -->
+        <div class="achievement-category">
+          <h3 class="category-title">📞 Casos ON</h3>
+          <div id="achievementsOn" class="achievements-grid">
+            <!-- Se generan dinámicamente con rangos 50-100-200-250 -->
+          </div>
+        </div>
+        
+        <!-- Casos OFF -->
+        <div class="achievement-category">
+          <h3 class="category-title">✉️ Casos OFF</h3>
+          <div id="achievementsOff" class="achievements-grid">
+            <!-- Se generan dinámicamente con rangos 50-100-200-250 -->
+          </div>
+        </div>
+        
+        <!-- Level Up -->
+        <div class="achievement-category">
+          <h3 class="category-title">✨ Level Up</h3>
+          <div id="achievementsLevel" class="achievements-grid">
+            <!-- Se generan dinámicamente -->
+          </div>
+        </div>
+        
+        <!-- Consistencia -->
+        <div class="achievement-category">
+          <h3 class="category-title">🔥 Consistencia</h3>
+          <div id="achievementsStreak" class="achievements-grid">
+            <!-- Se generan dinámicamente -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORIAL CON ESTADÍSTICAS -->
+    <section id="historyView" class="view">
+      <div class="navrow">
+        <button class="icon-btn" data-back="main">←</button>
+        <h2 class="title">Historial Completo</h2>
+        <button id="historyFilters" class="icon-btn" title="Filtros">🔍</button>
+      </div>
+      
+      <div class="filters-bar mb6" id="historyFiltersBar" hidden>
+        <div class="row">
+          <input id="historyDate" class="input" type="date"/>
+          <select id="historyType" class="input">
+            <option value="">Todos los tipos</option>
+            <option value="on">ON ▷</option>
+            <option value="off">OFF ✉</option>
+            <option value="level">Level Up ✨</option>
+          </select>
+          <button id="clearHistoryFilters" class="btn ghost">Limpiar</button>
+        </div>
+      </div>
+
+      <!-- NUEVO: Botón de estadísticas semanales -->
+      <div class="row mb6">
+        <button id="weeklyStatsBtn" class="btn outline grow">📊 Ver estadísticas 7 días</button>
+      </div>
+
+      <!-- NUEVO: Panel de estadísticas semanales -->
+      <div id="weeklyStatsPanel" class="weekly-stats-panel mb6" hidden>
+        <div class="card">
+          <div class="row-between">
+            <span class="subtitle">Últimos 7 días</span>
+            <span class="muted" id="weeklyTotal">0 casos</span>
+            <button id="closeWeeklyStats" class="icon-btn">✖</button>
+          </div>
+          <div class="weekly-chart mt6" id="weeklyChart">
+            <!-- Se genera dinámicamente -->
+          </div>
+        </div>
+      </div>
+      
+      <div class="grid2 mb6">
+        <div class="card">
+          <div class="stats-grid">
+            <div class="stat-item"><div class="stat-num" id="histStatsOn">0</div><div class="stat-label">▷ ON</div></div>
+            <div class="stat-item"><div class="stat-num" id="histStatsOff">0</div><div class="stat-label">✉ OFF</div></div>
+            <div class="stat-item"><div class="stat-num" id="histStatsLevel">0</div><div class="stat-label">✨ Level</div></div>
+            <div class="stat-item"><div class="stat-num" id="histStatsTotal">0</div><div class="stat-label">📊 Total</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="subtitle">Resumen</h3>
+          <div class="muted">Periodo: <span id="histStatsPeriod">Hoy</span></div>
+          <div class="muted">Promedio: <span id="histStatsAvg">—</span> casos/h</div>
+        </div>
+      </div>
+      
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <!-- FOCO -->
+    <section id="focusView" class="view focus tight agent-only">
+      <div class="navrow">
+        <button class="icon-btn" id="focusBackBtn">←</button>
+        <h2 class="title">Modo Foco</h2>
+      </div>
+      <div class="card mb6">
+        <label class="label">ID de caso</label>
+        <div class="case-input-container">
+          <input id="focusCaseId" class="input case-input big" type="text" placeholder="Ingresa ID y registra"/>
+          <button id="focusLevelUpModifier" class="level-up-btn level-up-focus" title="Level Up" data-type="modifier">✨</button>
+        </div>
+        <small class="muted">Último: <span id="lastCaseIdFocus">—</span></small>
+      </div>
+      <div class="row">
+        <button id="focusOn" class="btn action grow anim-on" data-type="on">▷ ON</button>
+        <button id="focusOff" class="btn action grow anim-off" data-type="off">✉ OFF</button>
+      </div>
+
+      <div class="progress big mt6 clamp-end">
+        <span id="focusProgressIcon" class="progress-icon">🚀</span>
+        <div id="focusProgress" class="progress-bar"></div>
+      </div>
+      <div class="giant mt6" id="focusTotal">0</div>
+    </section>
+
+    <!-- PANEL DEL LÍDER HÍBRIDO REDISEÑADO -->
+    <section id="leaderView" class="view leader-only">
+      <div class="navrow leader-only">
+        <h2 class="title">🏆 Panel del Líder</h2>
+      </div>
+
+      <!-- NUEVO: Dashboard Híbrido -->
+      <div class="leader-dashboard-hybrid">
+        
+        <!-- Header Stats -->
+        <div class="leader-header-stats mb6">
+          <div class="header-stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-info">
+              <div class="stat-number" id="leaderTotalCases">0</div>
+              <div class="stat-label">casos hoy</div>
+              <div class="stat-trend" id="leaderTrendDaily">--</div>
+            </div>
+          </div>
+          
+          <div class="header-stat-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-info">
+              <div class="stat-number" id="leaderGoalPercent">0%</div>
+              <div class="stat-label">meta global</div>
+              <div class="stat-trend" id="leaderTrendGoal">--</div>
+            </div>
+          </div>
+          
+          <div class="header-stat-card">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-info">
+              <div class="stat-number" id="leaderTopPerformer">--</div>
+              <div class="stat-label">top performer</div>
+              <div class="stat-trend" id="leaderTopCases">0 casos</div>
+            </div>
+          </div>
+          
+          <div class="header-stat-card">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-info">
+              <div class="stat-number" id="leaderActiveCount">0</div>
+              <div class="stat-label">activos</div>
+              <div class="stat-trend" id="leaderInactiveCount">0 inactivos</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Ranking -->
+        <div class="card leader-ranking-live mb6">
+          <div class="card-header">
+            <h3 class="subtitle">🏆 Ranking en Vivo</h3>
+            <span class="live-indicator">🔴 EN VIVO</span>
+          </div>
+          
+          <div id="leaderLiveRanking" class="live-ranking-list">
+            <!-- Se genera dinámicamente -->
+          </div>
+        </div>
+
+        <!-- Insights Panel -->
+        <div class="card leader-insights">
+          <div class="card-header">
+            <h3 class="subtitle">💡 Insights Automáticos</h3>
+          </div>
+          
+          <div id="leaderInsights" class="insights-list">
+            <!-- Se generan dinámicamente -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- HOSTS DE NOTIFICACIONES -->
+  <div id="toastHost" class="toast-host" aria-live="polite" aria-atomic="true"></div>
+  <div id="floatHost" class="float-host" aria-hidden="true"></div>
+
+  <!-- MODAL DE AYUDA ACTUALIZADO -->
+  <div id="helpModal" class="modal" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>¿Cómo funciona Case Counter Pro?</h3>
+        <button id="helpClose" class="icon-btn">✖</button>
+      </div>
+      <div class="modal-body">
+        <h4>📋 Registro de Casos</h4>
+        <p>• <strong>▷ ON</strong>: Casos de chat/llamada en tiempo real</p>
+        <p>• <strong>✉ OFF</strong>: Casos offline (emails, investigaciones)</p>
+        
+        <h4>✨ Level Up (NUEVO)</h4>
+        <p>• <strong>Modificador de complejidad</strong>: No es tipo de caso</p>
+        <p>• Activa ✨ y luego presiona ON u OFF</p>
+        <p>• Convierte casos normales en "ON/Level Up" o "OFF/Level Up"</p>
+        
+        <h4>🎯 Metas y Ranking</h4>
+        <p>• Tu meta diaria se actualiza automáticamente</p>
+        <p>• Compites en tiempo real con tu equipo</p>
+        <p>• El ranking se actualiza cada 5 segundos</p>
+        
+        <h4>🔥 Sistema de Rachas</h4>
+        <p>• Mantén rachas cumpliendo tu meta diariamente</p>
+        <p>• Se muestra debajo del resumen de casos</p>
+        <p>• Ve tu participación en el total del equipo</p>
+        
+        <h4>⏰ Métricas en Tiempo Real</h4>
+        <p>• <strong>Última hora</strong>: Muestra rango actual (ej: 14:00-15:00)</p>
+        <p>• <strong>Total equipo</strong>: Tu porcentaje de participación</p>
+        
+        <h4>🏆 Logros Actualizados</h4>
+        <p>• <strong>Rangos ON/OFF</strong>: 50, 100, 200, 250 casos</p>
+        <p>• Progreso visual con efectos especiales</p>
+        <p>• Desbloqueos automáticos por rendimiento</p>
+      </div>
+      <button id="helpOk" class="btn primary full">Entendido</button>
+    </div>
+  </div>
+
+  <script src="popup.js?v=2.5.0"></script>
+</body>
+</html>

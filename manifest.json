@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Case Counter Pro",
+  "description": "Plataforma gamificada de productividad con ranking, logros, rachas y métricas avanzadas para equipos de trabajo.",
+  "version": "2.0.0",
+  "permissions": ["storage", "alarms"],
+  "host_permissions": [
+    "https://script.google.com/a/macros/mercadolibre.com.co/s/AKfycbzULOcaGcZYFEFj_VHXv_ZzyvToUmX1U-UqYr9mkINJJQ99ibpJ0oI46WhmcbcwSpzLJw/exec"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Case Counter Pro v2.0"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y"
+      },
+      "description": "Abrir Case Counter Pro"
+    }
+  }
+}

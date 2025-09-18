@@ -1,0 +1,2215 @@
+/* Case Counter Pro — styles.css v2.6.0 - PARTE 1/2 - PANEL LÍDER HÍBRIDO */
+
+/* ========================================
+   VARIABLES Y RESET BASE
+======================================== */
+
+:root {
+  --bg: #f1fbf6;
+  --card: #fff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #1DBA8E;
+  --ring: rgba(0,0,0,.08);
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #e11d48;
+  --shadow: 0 4px 12px rgba(16,24,40,.06);
+  --shadow-lg: 0 8px 16px rgba(0,0,0,.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --transition: all 0.15s ease;
+  
+  /* NUEVOS: Variables para Panel Líder y Level Up */
+  --leader-accent: #3b82f6;
+  --leader-gold: #f59e0b;
+  --leader-success: #10b981;
+  --leader-danger: #ef4444;
+  --live-red: #ef4444;
+  --level-up-gold: #ffd700;
+  --level-up-purple: #8b5cf6;
+  --insight-bg: #f0f9ff;
+  --streak-fire: #ff4500;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 400px !important;
+  min-height: 500px !important;
+  max-width: 400px !important;
+  max-height: 700px !important;
+  overflow-x: hidden !important;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 12.5px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, "Inter", Arial, sans-serif;
+}
+
+/* Panel del Líder más ancho */
+body.leader-wide { 
+  width: 580px !important; 
+  max-width: 580px !important;
+}
+
+/* Ocultar elementos por rol */
+.agent-only { display: block; }
+.leader-only { display: none; }
+body.leader .agent-only { display: none !important; }
+body.leader .leader-only { display: block; }
+
+/* ========================================
+   THEMES
+======================================== */
+
+body.theme-mint { --bg: #f1fbf6; --primary: #1DBA8E; }
+body.theme-purple { --bg: #f7f3ff; --primary: #8A2BE2; }
+body.theme-sunset { --bg: #fff7f0; --primary: #FF7A18; }
+body.theme-ocean { --bg: #edf6ff; --primary: #1E88E5; }
+body.theme-pink { --bg: #fff0f7; --primary: #EC4899; }
+
+/* ========================================
+   LAYOUT PRINCIPALES
+======================================== */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--ring);
+  z-index: 10;
+}
+
+#appTitle {
+  font-weight: 800;
+  font-size: 16px;
+  margin-right: 4px;
+  color: var(--text);
+}
+
+.clock {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+.root {
+  padding: 8px;
+}
+
+/* ========================================
+   VIEWS Y NAVEGACIÓN
+======================================== */
+
+.view {
+  display: none;
+  animation: fadeIn 0.2s ease;
+}
+
+.view.active {
+  display: block;
+}
+
+.view.tight {
+  padding-bottom: 4px;
+}
+
+.view.focus {
+  background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 5%, transparent), var(--bg));
+  min-height: calc(100vh - 50px);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.navrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.navrow .title {
+  flex: 1;
+  margin: 0;
+}
+
+/* ========================================
+   NUEVO: LEVEL UP COMO MODIFICADOR
+======================================== */
+
+.case-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.case-input {
+  flex: 1;
+  padding-right: 40px !important;
+}
+
+.level-up-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, var(--level-up-purple), #7c3aed);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  z-index: 2;
+}
+
+.level-up-btn:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.level-up-btn.level-up-focus {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+/* NUEVO: Level Up Modificador Activo */
+.level-up-btn.active {
+  background: linear-gradient(135deg, var(--level-up-gold), #f59e0b);
+  animation: levelUpModifierActive 2s ease-in-out infinite;
+}
+
+@keyframes levelUpModifierActive {
+  0%, 100% { 
+    transform: translateY(-50%) scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); 
+  }
+  50% { 
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 0 0 8px rgba(255, 215, 0, 0); 
+  }
+}
+
+.case-input-container.level-up-mode .case-input {
+  border: 2px solid var(--level-up-gold);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
+  background: linear-gradient(45deg, #fff, #fffbeb);
+  animation: levelUpInputGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes levelUpInputGlow {
+  0% { box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3); }
+  100% { box-shadow: 0 0 0 5px rgba(255, 215, 0, 0.1); }
+}
+
+/* Indicador Level Up */
+.level-up-indicator {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1px solid var(--level-up-gold);
+  border-radius: var(--radius-sm);
+  animation: levelUpIndicatorPulse 2s ease-in-out infinite;
+}
+
+@keyframes levelUpIndicatorPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.level-up-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: #92400e;
+  text-align: center;
+}
+
+/* Botones con indicador Level Up */
+.btn .btn-level-indicator {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--level-up-gold);
+  text-shadow: 0 0 3px rgba(255, 215, 0, 0.8);
+  display: block;
+  margin-top: 2px;
+}
+
+.btn.level-up-active {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--level-up-gold) 90%, #fff), var(--level-up-gold));
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.5), 0 8px 16px rgba(0,0,0,.15);
+  animation: levelUpButtonGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes levelUpButtonGlow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.5), 0 8px 16px rgba(0,0,0,.15); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.3), 0 12px 20px rgba(255, 215, 0, 0.2); }
+}
+
+/* ========================================
+   NUEVO: RACHAS REUBICADAS
+======================================== */
+
+.streak-mini-relocated {
+  background: linear-gradient(135deg, #fff1f2, #ffffff);
+  border: 1px solid color-mix(in oklab, var(--streak-fire) 20%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  box-shadow: 0 2px 6px rgba(255, 69, 0, 0.08);
+  margin-top: 8px;
+}
+
+.streak-mini-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.streak-mini-icon {
+  font-size: 12px;
+  animation: miniFireFlicker 2s ease-in-out infinite alternate;
+}
+
+@keyframes miniFireFlicker {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+
+.streak-mini-content span:nth-child(2) {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--streak-fire);
+}
+
+.streak-mini-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.streak-mini-record {
+  color: var(--muted);
+  font-size: 9px;
+  margin-left: 4px;
+}
+
+/* ========================================
+   NUEVO: PANEL DEL LÍDER HÍBRIDO
+======================================== */
+
+.leader-dashboard-hybrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Header Stats Cards */
+.leader-header-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.header-stat-card {
+  background: linear-gradient(135deg, #fff, #f8fafc);
+  border: 1px solid var(--ring);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.header-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.header-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--leader-accent));
+}
+
+.stat-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.stat-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.stat-trend {
+  font-size: 9px;
+  color: var(--leader-success);
+  font-weight: 600;
+}
+
+.stat-trend.negative {
+  color: var(--leader-danger);
+}
+
+.stat-trend.neutral {
+  color: var(--muted);
+}
+
+/* Live Ranking */
+.leader-ranking-live {
+  background: linear-gradient(135deg, #fff, #f0f9ff);
+  border: 1px solid color-mix(in oklab, var(--leader-accent) 20%, transparent);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ring);
+}
+
+.live-indicator {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--live-red);
+  background: color-mix(in oklab, var(--live-red) 10%, transparent);
+  padding: 3px 6px;
+  border-radius: 999px;
+  animation: liveIndicatorPulse 2s ease-in-out infinite;
+}
+
+@keyframes liveIndicatorPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.live-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.live-rank-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--ring);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  position: relative;
+}
+
+.live-rank-item:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow);
+}
+
+.live-rank-item.rank-1 {
+  border-left: 4px solid var(--leader-gold);
+  background: linear-gradient(135deg, #fff, #fffbeb);
+}
+
+.live-rank-item.rank-2 {
+  border-left: 4px solid #94a3b8;
+  background: linear-gradient(135deg, #fff, #f8fafc);
+}
+
+.live-rank-item.rank-3 {
+  border-left: 4px solid #f59e0b;
+  background: linear-gradient(135deg, #fff, #fef3c7);
+}
+
+.rank-position {
+  font-size: 16px;
+  width: 24px;
+  text-align: center;
+  margin-right: 12px;
+  font-weight: 800;
+}
+
+.rank-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rank-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.rank-details {
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rank-badge {
+  font-size: 8px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.rank-badge.streak {
+  background: color-mix(in oklab, var(--streak-fire) 15%, transparent);
+  color: var(--streak-fire);
+}
+
+.rank-badge.improvement {
+  background: color-mix(in oklab, var(--leader-success) 15%, transparent);
+  color: var(--leader-success);
+}
+
+.rank-badge.goal {
+  background: color-mix(in oklab, var(--leader-accent) 15%, transparent);
+  color: var(--leader-accent);
+}
+
+.rank-cases {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-left: 8px;
+}
+
+.rank-progress {
+  width: 60px;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  margin: 4px 0 2px 0;
+  overflow: hidden;
+}
+
+.rank-progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+/* Insights Panel */
+.leader-insights {
+  background: var(--insight-bg);
+  border: 1px solid color-mix(in oklab, var(--leader-accent) 15%, transparent);
+}
+
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--leader-accent);
+}
+
+.insight-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.insight-text {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.insight-highlight {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.insight-item.positive {
+  border-left-color: var(--leader-success);
+}
+
+.insight-item.warning {
+  border-left-color: var(--warning);
+}
+
+.insight-item.info {
+  border-left-color: var(--leader-accent);
+}
+
+/* ========================================
+   TYPOGRAPHY COMPACTA
+======================================== */
+
+.title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.subtitle {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.error {
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.giant {
+  font-weight: 900;
+  font-size: 38px;
+  text-align: center;
+  color: var(--primary);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================
+   CARDS COMPACTAS
+======================================== */
+
+.card {
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border: 1px solid var(--ring);
+  border-radius: var(--radius);
+  padding: 10px;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.7);
+  margin-bottom: 6px;
+}
+
+.card.kpi {
+  display: grid;
+  gap: 1px;
+  text-align: center;
+  padding: 8px;
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  height: 100px;
+  background: #f8fafc;
+  border: 1px dashed var(--ring);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+}
+
+.placeholder div:first-child {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+/* ========================================
+   BOTONES COMPACTOS
+======================================== */
+
+.btn {
+  border: 0;
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.02s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  font-size: 12px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-direction: column;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.full { width: 100%; }
+.btn.grow { flex: 1; }
+.btn.big { padding: 12px 16px; font-size: 14px; }
+
+.btn.primary {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 85%, #fff), var(--primary));
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), var(--shadow-lg);
+}
+
+.btn.success {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 70%, var(--success)), color-mix(in oklab, var(--primary) 40%, #16a34a));
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), var(--shadow-lg);
+}
+
+.btn.danger {
+  background: linear-gradient(180deg, #f87171, #ef4444);
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), var(--shadow-lg);
+}
+
+.btn.action {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 90%, #fff), var(--primary));
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 8px 16px rgba(0,0,0,.15);
+  font-size: 14px;
+  padding: 10px 16px;
+}
+
+.btn.ghost {
+  background: #e2e8f0;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 6px 10px;
+}
+
+.btn.outline {
+  background: linear-gradient(#fff, #fff) padding-box,
+              linear-gradient(180deg, #e5e7eb, #cbd5e1) border-box;
+  border: 1px solid transparent;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.btn.toggle {
+  background: #fff;
+  border: 1px solid var(--ring);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+}
+
+.btn.toggle.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 24%, transparent);
+}
+
+.btn.pill {
+  flex: 1;
+  padding: 8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--ring);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(0,0,0,.04);
+  font-size: 11px;
+}
+
+.btn.pill.active {
+  border: 1px solid color-mix(in oklab, var(--primary) 45%, #fff);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 22%, transparent), 0 8px 16px rgba(0,0,0,.06);
+}
+
+/* Case Counter Pro — styles.css v2.6.0 - PARTE 2/2 - LOGROS Y COMPONENTES FINALES */
+
+/* ========================================
+   ICON BUTTONS COMPACTOS
+======================================== */
+
+.icon-btn {
+  background: transparent;
+  border: 0;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: var(--radius-xs);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  width: 28px;
+  height: 28px;
+}
+
+.icon-btn:hover {
+  background: rgba(0,0,0,.06);
+  transform: scale(1.05);
+}
+
+.bottom-nav {
+  background: var(--card);
+  color: var(--muted);
+  border: 1px solid var(--ring);
+  border-radius: var(--radius-xs);
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  position: relative;
+}
+
+.bottom-nav:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Badge para logros desbloqueados */
+.bottom-nav.has-new::after {
+  content: "!";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--danger);
+  color: white;
+  font-size: 8px;
+  font-weight: 700;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: badgePulse 1s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* Login específico */
+.login-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.login-header .title {
+  margin: 0;
+  flex: 1;
+  font-size: 20px;
+}
+
+.help-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+.help-btn:hover {
+  background: color-mix(in oklab, var(--primary) 80%, #000);
+  transform: scale(1.1);
+}
+
+/* ========================================
+   FORMULARIOS COMPACTOS
+======================================== */
+
+.input {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--ring);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+  font-size: 12px;
+  transition: var(--transition);
+}
+
+.input.big {
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 22%, transparent),
+              inset 0 1px 0 rgba(255,255,255,.6);
+}
+
+.input.invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--danger) 24%, transparent);
+  animation: shake 0.12s linear 2;
+}
+
+.input.range-color {
+  width: 50px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--ring);
+  cursor: pointer;
+}
+
+/* ========================================
+   MINI FIELDS COMPACTOS
+======================================== */
+
+.mini-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.mini-field .label {
+  font-size: 10px;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.mini-field .input {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+/* ========================================
+   PROGRESO COMPACTO
+======================================== */
+
+.progress {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: #eaeef3;
+  border-radius: 999px;
+  overflow: visible;
+}
+
+.progress.big {
+  height: 10px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--primary);
+  width: 0%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.progress-icon {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--primary) 80%, transparent));
+  transition: left 0.4s ease;
+}
+
+.progress.big .progress-icon {
+  font-size: 16px;
+}
+
+.clamp-end .progress-icon {
+  transform: translate(-50%, -50%);
+}
+
+/* ========================================
+   LAYOUT HELPERS COMPACTOS
+======================================== */
+
+.row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.grid2.gap10 {
+  gap: 8px;
+}
+
+/* Spacing compacto */
+.mt6 { margin-top: 6px; }
+.mb6 { margin-bottom: 6px; }
+.gap10 { gap: 8px; }
+
+/* ========================================
+   ESTADÍSTICAS COMPACTAS Y MÉTRICAS ACTUALIZADAS
+======================================== */
+
+.stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.stats li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 1px 0;
+}
+
+.stats b {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.kpi-num {
+  font-weight: 900;
+  font-size: 20px;
+  margin-top: 2px;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.kpi-num.small {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Stats para historial */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 6px;
+}
+
+.stat-num {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* CORREGIDO: Métricas en tiempo real */
+.realtime-metrics {
+  background: var(--metric-bg);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  border: 1px solid var(--ring);
+}
+
+.metric-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.metric-item:last-child {
+  margin-bottom: 0;
+}
+
+.metric-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.metric-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Estilo especial para participación del equipo */
+.metric-value #myParticipation {
+  font-weight: 800;
+  color: var(--warning);
+}
+
+/* ========================================
+   SISTEMA DE LOGROS ACTUALIZADO (50-250)
+======================================== */
+
+.achievement-progress {
+  background: linear-gradient(135deg, var(--primary), color-mix(in oklab, var(--primary) 70%, #fff));
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+
+.achievement-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.achievement-category {
+  background: var(--card);
+  border: 1px solid var(--ring);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+
+.category-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+  gap: 8px;
+}
+
+.achievement-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  min-height: 85px;
+}
+
+/* Estados de logros actualizados */
+.achievement-item.locked {
+  background: #f8fafc;
+  border: 1px dashed #9ca3af;
+  opacity: 0.6;
+}
+
+.achievement-item.progress {
+  background: linear-gradient(135deg, #fff, color-mix(in oklab, var(--primary) 5%, #fff));
+  border: 1px solid color-mix(in oklab, var(--primary) 30%, transparent);
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+.achievement-item.unlocked {
+  background: linear-gradient(135deg, #ffd700, #f59e0b);
+  border: 2px solid #ffd700;
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3), 
+              inset 0 1px 0 rgba(255,255,255,.7);
+  animation: achievementGlow 2s ease-in-out infinite alternate;
+  transform: scale(1.05);
+}
+
+/* NUEVO: Logro legendario (250 casos) */
+.achievement-item.legendary {
+  background: linear-gradient(135deg, #7c3aed, #a855f7, #c084fc);
+  border: 2px solid #7c3aed;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4),
+              inset 0 1px 0 rgba(255,255,255,.8);
+  animation: legendaryGlow 3s ease-in-out infinite;
+  transform: scale(1.1);
+}
+
+@keyframes achievementGlow {
+  0% { box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3), inset 0 1px 0 rgba(255,255,255,.7); }
+  100% { box-shadow: 0 6px 24px rgba(255, 215, 0, 0.5), inset 0 1px 0 rgba(255,255,255,.9); }
+}
+
+@keyframes legendaryGlow {
+  0%, 100% { 
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4), inset 0 1px 0 rgba(255,255,255,.8);
+  }
+  50% { 
+    box-shadow: 0 8px 30px rgba(124, 58, 237, 0.6), inset 0 1px 0 rgba(255,255,255,1);
+  }
+}
+
+.achievement-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+  filter: grayscale(0);
+  transition: filter 0.3s ease;
+}
+
+.achievement-item.locked .achievement-icon {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.achievement-item.unlocked .achievement-icon,
+.achievement-item.legendary .achievement-icon {
+  animation: achievementBounce 0.6s ease-out;
+}
+
+@keyframes achievementBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3) rotate(10deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.achievement-name {
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.achievement-item.unlocked .achievement-name {
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+
+.achievement-item.legendary .achievement-name {
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,.7);
+}
+
+.achievement-desc {
+  font-size: 8px;
+  color: var(--muted);
+  line-height: 1.1;
+}
+
+.achievement-item.unlocked .achievement-desc,
+.achievement-item.legendary .achievement-desc {
+  color: rgba(255,255,255,0.9);
+}
+
+/* Barra de progreso en logros */
+.achievement-progress-bar {
+  width: 100%;
+  height: 3px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.achievement-progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.achievement-item.unlocked .achievement-progress-fill {
+  background: rgba(255,255,255,0.8);
+}
+
+.achievement-item.legendary .achievement-progress-fill {
+  background: rgba(255,255,255,0.9);
+}
+
+/* Tooltip para logros */
+.achievement-item::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.9);
+  color: white;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  margin-bottom: 4px;
+  z-index: 10;
+}
+
+.achievement-item:hover::after {
+  opacity: 1;
+}
+
+/* ========================================
+   HISTORIAL CON ESTADÍSTICAS SEMANALES
+======================================== */
+
+.filters-bar {
+  background: var(--card);
+  padding: 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--ring);
+  box-shadow: var(--shadow);
+}
+
+.history-list {
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid var(--ring);
+  border-radius: var(--radius);
+  min-height: 160px;
+  background: var(--card);
+  scroll-behavior: smooth;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ring);
+  transition: var(--transition);
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-item:hover {
+  background: #f8fafc;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.case-type {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.case-on { color: #22c55e; }
+.case-off { color: #3b82f6; }
+.case-level { color: #8b5cf6; }
+
+.case-id {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.history-meta {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* NUEVO: Panel de estadísticas semanales */
+.weekly-stats-panel {
+  background: var(--card);
+  border: 1px solid var(--ring);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  animation: weeklyPanelSlide 0.3s ease-out;
+}
+
+@keyframes weeklyPanelSlide {
+  from { 
+    opacity: 0; 
+    transform: translateY(-10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.weekly-stats-panel .card {
+  margin: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.weekly-chart {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  height: 50px;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.chart-bar {
+  flex: 1;
+  background: linear-gradient(180deg, var(--primary), color-mix(in oklab, var(--primary) 70%, #fff));
+  border-radius: 4px 4px 0 0;
+  min-height: 3px;
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.chart-bar:hover {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 80%, #000), var(--primary));
+  transform: scaleY(1.1);
+}
+
+.chart-bar::after {
+  content: attr(data-value);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 9px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  margin-bottom: 2px;
+}
+
+.chart-bar:hover::after {
+  opacity: 1;
+}
+
+.chart-day-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ========================================
+   RANKING MEJORADO CON MENSAJES MOTIVACIONALES
+======================================== */
+
+.motivational-card {
+  background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 10%, #fff), #fff);
+  border: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
+  border-radius: var(--radius);
+  padding: 10px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  animation: motivationPulse 3s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes motivationPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.motivational-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: rotate(45deg);
+  animation: motivationShine 4s ease-in-out infinite;
+}
+
+@keyframes motivationShine {
+  0%, 100% { transform: translateX(-100%) rotate(45deg); }
+  50% { transform: translateX(100%) rotate(45deg); }
+}
+
+.motivation-text {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--primary);
+  position: relative;
+  
+}
+
+.rank-list {
+  display: grid;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  padding-right: 2px;
+}
+
+.rank-item {
+  background: #fff;
+  border: 1px solid var(--ring);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0,0,0,.04);
+  transition: var(--transition);
+  position: relative;
+}
+
+.rank-item:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+/* NUEVO: Indicador de proximidad competitiva */
+.rank-item.close-competitor {
+  border-left: 3px solid var(--warning);
+}
+
+.rank-item.close-competitor::after {
+  content: "¡Cerca!";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  background: var(--warning);
+  color: white;
+  font-size: 7px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-weight: 700;
+}
+
+/* ========================================
+   GOAL INLINE COMPACTO
+======================================== */
+
+.goal-inline {
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--ring);
+  box-shadow: var(--shadow);
+}
+
+.goal-inline .input {
+  margin-bottom: 6px;
+}
+
+/* ========================================
+   NOTIFICACIONES COMPACTAS
+======================================== */
+
+.toast-host {
+  position: fixed;
+  right: 6px;
+  bottom: 6px;
+  display: grid;
+  gap: 4px;
+  z-index: 50;
+}
+
+.toast {
+  background: #111827;
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  box-shadow: 0 6px 18px rgba(0,0,0,.2);
+  opacity: 0;
+  transform: translateY(4px);
+  animation: toastIn 0.15s ease-out forwards;
+  max-width: 260px;
+  font-size: 11px;
+}
+
+.toast.celebrate {
+  background: linear-gradient(180deg, #16a34a, #15803d);
+}
+
+.toast.warn {
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+}
+
+.toast.info {
+  background: linear-gradient(180deg, #2563eb, #1d4ed8);
+}
+
+.toast.fade {
+  animation: toastOut 0.2s ease-in forwards;
+}
+
+.float-host {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* ========================================
+   TEMA PICKER COMPACTO
+======================================== */
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--ring);
+  display: grid;
+  place-items: center;
+  background: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.swatch.fancy {
+  background: var(--c);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(0,0,0,.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.swatch.fancy:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0,0,0,.14);
+}
+
+.swatch.fancy::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+  transform: rotate(45deg);
+  transition: var(--transition);
+  opacity: 0;
+}
+
+.swatch.fancy:hover::before {
+  opacity: 1;
+}
+
+.swatch.pulse {
+  animation: pulse 0.2s ease-out;
+}
+
+/* ========================================
+   MODAL DE AYUDA COMPACTO
+======================================== */
+
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  background: white;
+  border-radius: var(--radius);
+  padding: 16px;
+  max-width: 340px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.2s ease;
+  margin: 16px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--ring);
+  padding-bottom: 10px;
+}
+
+.modal-header h3 {
+  color: var(--primary);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.modal-body h4 {
+  margin: 12px 0 6px 0;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.modal-body p {
+  margin: 4px 0;
+  line-height: 1.4;
+  font-size: 12px;
+}
+
+.modal-body code {
+  background: #f8fafc;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  word-break: break-all;
+  color: var(--primary);
+  border: 1px solid var(--ring);
+}
+
+/* ========================================
+   ANIMACIONES MEJORADAS
+======================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes toastIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  to { opacity: 0; transform: translateY(4px); }
+}
+
+@keyframes shake {
+  from { transform: translateX(-1px); }
+  50% { transform: translateX(1px); }
+  to { transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Animaciones de botones específicas */
+.anim-on.ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(255,255,255,.7);
+  border-radius: 999px;
+  animation: rippleSuccess 0.3s ease-out forwards;
+}
+
+@keyframes rippleSuccess {
+  from { transform: scale(0.2); opacity: 0.9; }
+  to { transform: scale(1.6); opacity: 0; }
+}
+
+.anim-off.slide {
+  animation: mailNudge 0.15s ease-out;
+}
+
+@keyframes mailNudge {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+.anim-level.pop::after {
+  content: "⭐";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.4) rotate(-10deg);
+  animation: levelPop 0.35s ease-out;
+}
+
+@keyframes levelPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-10deg); }
+  60% { opacity: 1; transform: translate(-50%, -80%) scale(1.1) rotate(6deg); }
+  100% { opacity: 0; transform: translate(-50%, -110%) scale(1) rotate(0); }
+}
+
+/* ========================================
+   CONFETTI COMPACTO
+======================================== */
+
+.confetti {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.confetti i {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  animation: confettiFall 0.7s linear forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* ========================================
+   RESPONSIVE COMPLETO
+======================================== */
+
+@media (max-width: 480px) {
+  body {
+    width: 100vw !important;
+    min-width: 300px !important;
+  }
+  
+  body.leader-wide {
+    width: 100vw !important;
+    min-width: 320px !important;
+  }
+  
+  .modal-content {
+    margin: 8px;
+    max-width: none;
+    padding: 12px;
+  }
+  
+  .grid2 {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .row {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  /* Panel del Líder responsive */
+  .leader-header-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .header-stat-card {
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .stat-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 20px;
+  }
+  
+  .stat-number {
+    font-size: 16px;
+  }
+  
+  .live-rank-item {
+    padding: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .rank-cases {
+    font-size: 14px;
+    margin: 0;
+  }
+  
+  /* Responsive para logros */
+  .achievements-grid {
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  }
+  
+  .achievement-item {
+    min-height: 70px;
+    padding: 6px;
+  }
+  
+  .achievement-icon {
+    font-size: 20px;
+  }
+  
+  /* Responsive para gráfico semanal */
+  .weekly-chart {
+    height: 45px;
+  }
+  
+  /* Responsive para rachas mini */
+  .streak-mini-content {
+    font-size: 9px;
+  }
+  
+  .streak-mini-content span:nth-child(2) {
+    font-size: 11px;
+  }
+  
+  /* Responsive para Level Up mode */
+  .level-up-indicator {
+    padding: 5px 8px;
+  }
+  
+  .level-up-status {
+    font-size: 10px;
+  }
+  
+  /* Responsive para métricas */
+  .metric-label {
+    font-size: 9px;
+  }
+  
+  .metric-value {
+    font-size: 10px;
+  }
+}
+
+/* ========================================
+   TABS COMPACTAS
+======================================== */
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tab {
+  flex: 1;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: var(--muted);
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.tab.active {
+  background: var(--primary);
+  color: white;
+  border-radius: var(--radius-xs);
+}
+
+.tabpanel {
+  display: none;
+}
+
+.tabpanel.active {
+  display: block;
+}
+
+/* ========================================
+   UTILIDADES FINALES
+======================================== */
+
+.font-bold { font-weight: 700; }
+.text-center { text-align: center; }
+.hidden { display: none !important; }
+
+[hidden] { display: none !important; }
+
+/* Scrollbar personalizado más delgado */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--card);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--primary) 80%, #000);
+}
+
+.rank-list::-webkit-scrollbar-track,
+.history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ========================================
+   NUEVAS UTILIDADES PARA GAMIFICACIÓN v2.0
+======================================== */
+
+/* Clase helper para elementos recién desbloqueados */
+.newly-unlocked {
+  animation: newlyUnlockedGlow 3s ease-in-out;
+}
+
+@keyframes newlyUnlockedGlow {
+  0%, 100% { box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 8px 32px rgba(255, 215, 0, 0.6); }
+}
+
+/* Estados de conexión */
+.connection-status {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.connection-status.offline {
+  background: var(--danger);
+  animation: connectionPulse 1s ease-in-out infinite;
+}
+
+@keyframes connectionPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Efecto de carga para métricas */
+.metric-loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Animaciones especiales para Level Up mode */
+.level-up-active-global {
+  animation: globalLevelUpEffect 2s ease-in-out;
+}
+
+@keyframes globalLevelUpEffect {
+  0%, 100% { 
+    filter: brightness(1); 
+  }
+  25% { 
+    filter: brightness(1.1) saturate(1.2); 
+  }
+  50% { 
+    filter: brightness(1.05) saturate(1.1); 
+  }
+  75% { 
+    filter: brightness(1.1) saturate(1.2); 
+  }
+}
+
+/* Efecto especial para rachas altas */
+.streak-on-fire {
+  animation: onFireEffect 1s ease-in-out infinite alternate;
+}
+
+@keyframes onFireEffect {
+  0% { 
+    box-shadow: 0 2px 6px rgba(255, 69, 0, 0.08);
+  }
+  100% { 
+    box-shadow: 0 4px 12px rgba(255, 69, 0, 0.2);
+  }
+}
+
+/* Transiciones suaves para cambios de vista */
+.view-transition {
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.view-transition.fade-out {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.view-transition.fade-in {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Efectos hover mejorados para botones de acción */
+.btn.action:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 12px 20px rgba(0,0,0,.2);
+}
+
+/* Micro-interacciones para Level Up */
+.level-up-btn.activated {
+  animation: levelUpActivated 0.5s ease-out;
+}
+
+@keyframes levelUpActivated {
+  0% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-50%) scale(1.3) rotate(10deg); }
+  100% { transform: translateY(-50%) scale(1.1) rotate(0deg); }
+}
+
+/* Efectos especiales para insights del líder */
+.insight-item.highlight {
+  animation: insightHighlight 2s ease-in-out;
+}
+
+@keyframes insightHighlight {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); background: #f0f9ff; }
+}
+
+/* Animación para live ranking updates */
+.live-rank-item.updated {
+  animation: rankingUpdate 0.8s ease-out;
+}
+
+@keyframes rankingUpdate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); box-shadow: 0 4px 12px rgba(29, 186, 142, 0.2); }
+  100% { transform: scale(1); }
+}
+
+/* Estados especiales para métricas del líder */
+.stat-number.trending-up {
+  color: var(--leader-success);
+  animation: trendingUp 2s ease-in-out infinite;
+}
+
+.stat-number.trending-down {
+  color: var(--leader-danger);
+  animation: trendingDown 2s ease-in-out infinite;
+}
+
+@keyframes trendingUp {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes trendingDown {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+}
